@@ -1,26 +1,30 @@
 import telebot
 from telebot import types
 token = '1433761514:AAEjloVnA7U0E2ZflljiGYViTCgv0DGdnhc'
-start, name, weight, height, sex, CONFIRMATION,res = range(7)
+start, name, weight, height, sex, CONFIRMATION,res = range(7) #range(7)= 0 1 2 3 4 5 6 start=0  уровни
 bot = telebot.TeleBot(token)
 
-from collections import defaultdict
-info_state = defaultdict(lambda: start)
+from collections import defaultdict #{'message.chat.id':start}
+info_state = defaultdict(lambda: start) # создаем словарь уровня юзера
 
 def get_state(message):
-    return info_state[message.chat.id]
-def update_state(message, state):
+    return info_state[message.chat.id]  #получаем на каком уровни человека
+
+def update_state(message, state): # обновляем уровень
     info_state[message.chat.id] = state
-person_info = defaultdict(lambda: {})
-def update_info(user_id, key, value):
-   person_info[user_id][key] = value
-def get_info(user_id):
-    return person_info[user_id]
-markup1 = types.ReplyKeyboardMarkup(resize_keyboard=True)
-item11 = types.KeyboardButton("женский")
+person_info = defaultdict(lambda: {})  #словарь где мы храним данные веденный человеком
+
+def update_info(user_id, key, value): # обновляем словарь с данными людей
+       person_info[user_id][key] = value # person_info[user_id]['name'] return name of user/  person_info[user_id]['name']='Annel'  //  person_info={user_id:{'name':'Annel'}} our dict example
+
+def get_info(user_id):   # мы получаем данные юзера 
+    return person_info[user_id]  
+
+markup1 = types.ReplyKeyboardMarkup(resize_keyboard=True)  #клавиратура
+item11 = types.KeyboardButton("женский")  #кнопка
 item22 = types.KeyboardButton("мужской")
-markup1.add(item11, item22)
-markup1_close=types.ReplyKeyboardRemove()
+markup1.add(item11, item22)  #с помощью метода добавляем кнопки внутри клавиратуры  
+markup1_close=types.ReplyKeyboardRemove() # переменная для закрытия клавиратуры
 markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
 item1 = types.KeyboardButton("даа,хочу")
 item2 = types.KeyboardButton("неее,спасибо")
@@ -30,18 +34,19 @@ markup_close=types.ReplyKeyboardRemove()
 def handle_mot(message):
     bot.send_message(message.chat.id, text="https://www.woman.ru/health/diets/article/81412/")
     bot.send_message(message.chat.id, text="https://www.youtube.com/watch?v=ux6yDvS3PXw")
+
 @bot.message_handler(commands=['about'])
-def handle_mot(message):
+def handle_mot(message):#bot.get_me() с помщью этого метода мы получаем имя бота 
     bot.send_message(message.chat.id, text="Я{0.first_name}. Я помогу помочь расcчитать твой идельный вес. Могу помочь похудеть если у тебя перевес или же набрать если недовес. А еще у меня есть команда  /motivation ".format(bot.get_me()))
 
-@bot.message_handler(func=lambda message: get_state(message) == start)
+@bot.message_handler(func=lambda message: get_state(message) == start) #если уровень будет старт
 def handle_message(message):
     bot.send_message(message.chat.id, text='Ваше имя')
-    update_state(message, name)
+    update_state(message, name)#обновляется  уровень на name
 
 @bot.message_handler(func=lambda message: get_state(message) == name)
 def handle_name(message):
-    update_info(message.chat.id, 'name', message.text)
+    update_info(message.chat.id, 'name', message.text)#обновляется информация вызывая функцию update_info ... (словарь  person_info={user_id:{'name':'Annel'}} )
     bot.send_message(message.chat.id, text='Ваш вес')
     update_state(message, weight)
 
@@ -63,23 +68,23 @@ def handle_sex(message):
 @bot.message_handler(func = lambda message : get_state(message)==CONFIRMATION)
 def handle_wf(message):
     if 'да' in message.text.lower():
-        sex=person_info[message.chat.id]['sex']
-        w=person_info[message.chat.id]['weight']
-        h=person_info[message.chat.id]['height']
-        n=person_info[message.chat.id]['name']
-        if sex=='женский':
-            id_w=(int(h)- 110) * 1.15
-            if id_w == int(w):
+        sex=person_info[message.chat.id]['sex']  #возвращает пол ис охраняем внутри переменной  
+        w=person_info[message.chat.id]['weight']#возвращает вес
+        h=person_info[message.chat.id]['height']#возвращает рост 
+        n=person_info[message.chat.id]['name']#возвращает имя 
+        if sex=='женский': #если пол женский то работает 
+            id_w=(int(h)- 110) * 1.15 #внутри переменной id_w сохраняем вычитанный формулой идельный вес. int(h): с помощью функции int() мы изменяем тип данных на цифр
+            if id_w == int(w):  #с помощью функции int() мы изменяем тип данных на цифр
                 bot.send_message(message.chat.id, text='{},поздравляю! У вас идеальный вес'.format(n))
                 bot.send_message(message.chat.id, text='Хотите сохранить свой вес?', parse_mode='html',reply_markup=markup)
             elif id_w > int(w):
-                bot.send_message(message.chat.id, text='{},к сожалению,у вас недовес. Для вас иделаьный вес {}'.format(n,id_w))
+                bot.send_message(message.chat.id, text='{},к сожалению,у вас недовес. Для вас иделаьный вес {}'.format(n,id_w)) #id_w у нас типом данных float, если хотим сделать цифрой то пользуемся с функцией int()  
                 bot.send_message(message.chat.id, text='Хотите набрать вес?', parse_mode='html',reply_markup=markup)
             elif id_w<int(w):
                 bot.send_message(message.chat.id, text='{},к сожалению,у перевес.Для вас иделаьный вес {}'.format(n,id_w))
                 bot.send_message(message.chat.id, text='Хотите сбросить вес?', parse_mode='html',reply_markup=markup)
         elif sex=='мужской':
-            id_w=(int(h)- 100) * 1.15
+            id_w=(int(h)- 100) * 1.15 
             if id_w == int(w):
                 bot.send_message(message.chat.id, text='{},поздравляю! У вас идеальный вес'.format(n))
                 bot.send_message(message.chat.id, text='Хотите сохранить свою фигуру?', parse_mode='html',reply_markup=markup)
@@ -112,9 +117,9 @@ def callback(call):
                     but4 = types.InlineKeyboardButton("для плоского живота", callback_data='jiv')
                     markup3.add(but11, but22, but3,but4)
                     bot.send_message(call.message.chat.id, text='Для какой части тело хочешь получить упражнение?', parse_mode='html', reply_markup=markup3)
-                    bot.send_message(call.message.chat.id, text="Вы также можете посетить наш фитнес клуб. Узнать про нас можете переходя по ссылке https://invictusfitness.kz/")
-                    bot.send_location(call.message.chat.id,43.2048869,76.8970043 )
-                    bot.answer_callback_query(callback_query_id=call.id, show_alert=False, text='U can')
+                    bot.send_message(call.message.chat.id, text="Вы также можете посетить наш фитнес клуб. Узнать про нас можете переходя по ссылке https://invictusfitness.kz/") #реклама, монитизация для нашего бота
+                    bot.send_location(call.message.chat.id,43.2048869,76.8970043 ) #широта и долгота узнали в URL
+                    bot.answer_callback_query(callback_query_id=call.id, show_alert=False, text='U can') #не заметтный alert
                 elif call.data == 'di':
                     markup4 = types.InlineKeyboardMarkup(row_width=2)
                     but111 = types.InlineKeyboardButton("Завтрак", callback_data='br')
@@ -137,5 +142,5 @@ def callback(call):
                     bot.send_message(call.message.chat.id, text="https://www.youtube.com/watch?app=desktop&v=cIuiQyfKBTg")
                 elif call.data == 'jiv':
                     bot.send_message(call.message.chat.id, text="https://www.youtube.com/watch?v=rPPu5RqB_TU")
-                bot.answer_callback_query(callback_query_id=call.id, show_alert=True, text='Good luck')
+                bot.answer_callback_query(callback_query_id=call.id, show_alert=True, text='Good luck') #заметтный alert
 bot.polling()
